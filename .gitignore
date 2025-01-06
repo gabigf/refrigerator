@@ -1,2 +1,6 @@
 *.pyc
 __pycache__/
+*.db
+instance
+htmlcov
+.pytest_cache
