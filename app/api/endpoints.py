@@ -13,7 +13,7 @@ def create_user():
     new_user = User(email=data['email'], password=hashed_password, full_name=data['full_name'])
     db.session.add(new_user)
     db.session.commit()
-    return jsonify({'message': 'User created successfully'}), 201
+    return jsonify(new_user.to_response_json()), 201
 
 
 
