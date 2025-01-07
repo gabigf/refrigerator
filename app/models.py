@@ -17,3 +17,10 @@ class User(db.Model, UserMixin):
   items = db.relationship('Item')
   def check_password(self, password):
         return check_password_hash(self.password, password)
+
+  def to_response_json(self):
+      return {
+          'id': self.id,
+          'email': self.email,
+          'full_name': self.full_name
+      }

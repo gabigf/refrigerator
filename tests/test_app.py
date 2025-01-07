@@ -28,7 +28,9 @@ def test_create_user(client):
     response = client.post('/users', json=user_data)
 
     assert response.status_code == 201
-    assert response.json['message'] == 'User created successfully'
+    assert response.json['email'] == "testuser@example.com"
+    assert response.json['full_name'] == "Test User"
+    assert response.json['id'] == 1
 
     with client.application.app_context():
         user = User.query.filter_by(email="testuser@example.com").first()
