@@ -84,3 +84,24 @@ def test_login_unsuccessful(client, user_data, invalid_login_data):
     response = client.post('/login', json=invalid_login_data)
     assert response.status_code == 401
     assert response.json["message"] == "Invalid credentials"
+
+
+
+def test_logout(client, user_data):
+  # login user
+    client.post('/users', json=user_data)
+    login_data = {
+        "email": user_data["email"],
+        "password": user_data["password"]
+    }
+    client.post('/login', json=login_data)
+
+  # logout user
+    response = client.post('/logout')
+    assert response.status_code == 200
+    assert response.json["message"] == "Logout successful"
+
+  # check if user is logged out
+    logout_response = client.post('/logout')
+    assert logout_response.status_code == 400
+    assert logout_response.json["error"] == "No user is logged in"

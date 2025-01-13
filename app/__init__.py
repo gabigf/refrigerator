@@ -16,11 +16,17 @@ def create_app(testing=False):
       app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
 
     db.init_app(app)
+    login_manager = LoginManager(app)
+
+    @login_manager.user_loader
+    def load_user(user_id):
+      with db.session() as session:
+        return session.get(User, int(user_id))
+
 
     app.register_blueprint(api, url_prefix='/')
 
 
     create_database(app)
-    login_manager = LoginManager(app)
 
     return app
