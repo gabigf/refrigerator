@@ -24,5 +24,5 @@ def login():
 
     if user and user.check_password(data['password']):
         login_user(user)
-        return jsonify({'message': 'Login successful'}), 200
+        return jsonify(user.to_response_json()), 200
     return jsonify({'message': 'Invalid credentials'}), 401
