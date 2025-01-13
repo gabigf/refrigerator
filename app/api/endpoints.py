@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from werkzeug.security import generate_password_hash
 from app.models import User, db
-from flask_login import login_user
+from flask_login import login_user, logout_user, current_user
 
 api = Blueprint('api', __name__)
 
@@ -26,3 +26,13 @@ def login():
         login_user(user)
         return jsonify(user.to_response_json()), 200
     return jsonify({'message': 'Invalid credentials'}), 401
+
+
+
+@api.route('/logout', methods=['POST'])
+def logout():
+    if current_user.is_authenticated:
+        logout_user()
+        return jsonify({"message": "Logout successful"}), 200
+    else:
+        return jsonify({"error": "No user is logged in"}), 400
