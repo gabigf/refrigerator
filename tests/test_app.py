@@ -120,7 +120,8 @@ def test_add_item(client, user_data):
     item_data = {
         "name": "Milk",
         "quantity": 2,
-        "category": "Dairy"
+        "category": "Dairy",
+        "user_id": 1
     }
     response = client.post('/items', json=item_data)
 
@@ -129,6 +130,7 @@ def test_add_item(client, user_data):
     assert response_data["name"] == item_data["name"]
     assert response_data["quantity"] == item_data["quantity"]
     assert response_data["category"] == item_data["category"]
+    assert response_data["user_id"] == 1
 
     with client.application.app_context():
         from app.models import Item, User
@@ -139,3 +141,4 @@ def test_add_item(client, user_data):
         assert item.name == item_data["name"]
         assert item.quantity == item_data["quantity"]
         assert item.category == item_data["category"]
+        assert item.user_id == item_data["user_id"]

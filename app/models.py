@@ -13,7 +13,8 @@ class Item(db.Model):
           'id': self.id,
           'name': self.name,
           'quantity': self.quantity,
-          'category': self.category
+          'category': self.category,
+          'user_id': self.user_id
       }
 
 class User(db.Model, UserMixin):
