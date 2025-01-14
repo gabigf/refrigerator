@@ -56,10 +56,4 @@ def add_item():
     db.session.add(item)
     db.session.commit()
 
-    return jsonify({
-        "id": item.id,
-        "name": item.name,
-        "quantity": item.quantity,
-        "category": item.category,
-        "user_id": item.user_id
-    }), 201
+    return jsonify(item.to_response_json()), 201

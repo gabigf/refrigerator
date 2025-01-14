@@ -8,6 +8,13 @@ class Item(db.Model):
   quantity = db.Column(db.Integer)
   category = db.Column(db.String(150))
   user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+  def to_response_json(self):
+      return {
+          'id': self.id,
+          'name': self.name,
+          'quantity': self.quantity,
+          'category': self.category
+      }
 
 class User(db.Model, UserMixin):
   id = db.Column(db.Integer, primary_key=True)
