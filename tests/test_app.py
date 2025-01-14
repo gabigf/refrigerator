@@ -105,3 +105,40 @@ def test_logout(client, user_data):
     logout_response = client.post('/logout')
     assert logout_response.status_code == 400
     assert logout_response.json["error"] == "No user is logged in"
+
+
+
+def test_add_item(client, user_data):
+
+    client.post('/users', json=user_data)
+    login_data = {
+        "email": user_data["email"],
+        "password": user_data["password"]
+    }
+    client.post('/login', json=login_data)
+
+    item_data = {
+        "name": "Milk",
+        "quantity": 2,
+        "category": "Dairy",
+        "user_id": 1
+    }
+    response = client.post('/items', json=item_data)
+
+    assert response.status_code == 201
+    response_data = response.json
+    assert response_data["name"] == item_data["name"]
+    assert response_data["quantity"] == item_data["quantity"]
+    assert response_data["category"] == item_data["category"]
+    assert response_data["user_id"] == 1
+
+    with client.application.app_context():
+        from app.models import Item, User
+        user = User.query.filter_by(email=user_data["email"]).first()
+        assert user is not None
+        item = Item.query.filter_by(name=item_data["name"], user_id=user.id).first()
+        assert item is not None
+        assert item.name == item_data["name"]
+        assert item.quantity == item_data["quantity"]
+        assert item.category == item_data["category"]
+        assert item.user_id == item_data["user_id"]
