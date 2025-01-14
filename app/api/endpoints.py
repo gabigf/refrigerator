@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from werkzeug.security import generate_password_hash
-from app.models import User, db
-from flask_login import login_user, logout_user, current_user
+from app.models import User, Item, db
+from flask_login import login_user, logout_user, current_user, login_required
 
 api = Blueprint('api', __name__)
 
@@ -36,3 +36,30 @@ def logout():
         return jsonify({"message": "Logout successful"}), 200
     else:
         return jsonify({"error": "No user is logged in"}), 400
+
+
+
+@api.route('/items', methods=['POST'])
+@login_required
+def add_item():
+    data = request.get_json()
+
+    if not data or not all(key in data for key in ["name", "quantity", "category"]):
+        return jsonify({"message": "Invalid input"}), 400
+
+    item = Item(
+        name=data["name"],
+        quantity=data["quantity"],
+        category=data["category"],
+        user_id=current_user.id
+    )
+    db.session.add(item)
+    db.session.commit()
+
+    return jsonify({
+        "id": item.id,
+        "name": item.name,
+        "quantity": item.quantity,
+        "category": item.category,
+        "user_id": item.user_id
+    }), 201
