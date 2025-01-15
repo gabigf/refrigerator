@@ -57,3 +57,29 @@ def add_item():
     db.session.commit()
 
     return jsonify(item.to_response_json()), 201
+
+
+
+@api.route('/items/<int:item_id>', methods=['PUT'])
+@login_required
+def edit_item(item_id):
+    item = db.session.get(Item, item_id)
+
+    if not item:
+        return jsonify({"message": "Item not found"}), 404
+
+    if item.user_id != current_user.id:
+        return jsonify({"message": "Unauthorized"}), 403
+
+    data = request.get_json()
+
+    if "name" in data:
+        item.name = data["name"]
+    if "quantity" in data:
+        item.quantity = data["quantity"]
+    if "category" in data:
+        item.category = data["category"]
+
+    db.session.commit()
+
+    return jsonify(item.to_response_json()), 200

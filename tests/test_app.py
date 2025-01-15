@@ -27,6 +27,15 @@ def user_data():
     }
 
 @pytest.fixture
+def item_data():
+    return {
+        "name": "Milk",
+        "quantity": 2,
+        "category": "Dairy",
+        "user_id": 1
+    }
+
+@pytest.fixture
 def invalid_login_data():
     return {
         "email": "testuser@example.com",
@@ -39,6 +48,15 @@ def expected_user():
         "id": user.id,
         "email": user.email,
         "full_name": user.full_name
+    }
+
+def expected_item():
+    return lambda item: {
+        "id": item.id,
+        "name": item.name,
+        "quantity": item.quantity,
+        "category": item.category,
+        "user_id": item.user_id
     }
 
 
