@@ -1,7 +1,7 @@
 from flask import Flask
 from app.extensions import db
 from app.models import User
-from app.api.endpoints import api
+from app.api import register_blueprints
 from flask_login import LoginManager
 from flask_migrate import Migrate
 
@@ -27,7 +27,7 @@ def create_app(testing=False):
       with db.session() as session:
         return session.get(User, int(user_id))
 
-    app.register_blueprint(api, url_prefix='/')
+    register_blueprints(app)
 
 
     return app

@@ -44,7 +44,7 @@ def expected_user():
 
 
 def test_create_user(client, user_data, expected_user):
-    response = client.post('/users', json=user_data)
+    response = client.post("/api/users", json=user_data)
     assert response.status_code == 201
 
     response_data = response.json
@@ -59,13 +59,13 @@ def test_create_user(client, user_data, expected_user):
 
 
 def test_login_success(client, user_data, expected_user):
-    client.post('/users', json=user_data)
+    client.post("/api/users", json=user_data)
 
     login_data = {
         "email": user_data["email"],
         "password": user_data["password"]
     }
-    response = client.post('/login', json=login_data)
+    response = client.post("/api/login", json=login_data)
     assert response.status_code == 200
 
     response_data = response.json
@@ -79,9 +79,9 @@ def test_login_success(client, user_data, expected_user):
 
 
 def test_login_unsuccessful(client, user_data, invalid_login_data):
-    client.post('/users', json=user_data)
+    client.post("/api/users", json=user_data)
 
-    response = client.post('/login', json=invalid_login_data)
+    response = client.post("/api/login", json=invalid_login_data)
     assert response.status_code == 401
     assert response.json["message"] == "Invalid credentials"
 
@@ -89,33 +89,33 @@ def test_login_unsuccessful(client, user_data, invalid_login_data):
 
 def test_logout(client, user_data):
   # login user
-    client.post('/users', json=user_data)
+    client.post("/api/users", json=user_data)
     login_data = {
         "email": user_data["email"],
         "password": user_data["password"]
     }
-    client.post('/login', json=login_data)
+    client.post('/api/login', json=login_data)
 
   # logout user
-    response = client.post('/logout')
+    response = client.post("/api/logout")
     assert response.status_code == 200
     assert response.json["message"] == "Logout successful"
 
   # check if user is logged out
-    logout_response = client.post('/logout')
+    logout_response = client.post("/api/logout")
     assert logout_response.status_code == 400
     assert logout_response.json["error"] == "No user is logged in"
 
 
-
+# TODO: Fix this test - category should not be a string
 def test_add_item(client, user_data):
 
-    client.post('/users', json=user_data)
+    client.post("/api/users", json=user_data)
     login_data = {
         "email": user_data["email"],
         "password": user_data["password"]
     }
-    client.post('/login', json=login_data)
+    client.post("/api/login", json=login_data)
 
     item_data = {
         "name": "Milk",
@@ -123,7 +123,7 @@ def test_add_item(client, user_data):
         "category": "Dairy",
         "user_id": 1
     }
-    response = client.post('/items', json=item_data)
+    response = client.post("/api/items", json=item_data)
 
     assert response.status_code == 201
     response_data = response.json
