@@ -1,8 +1,9 @@
 from flask import Flask
-from app.extensions import db, create_database
-from app.models import User, Item
-from app.api.endpoints import api
+from app.extensions import db
+from app.models import User
+from app.api import register_blueprints
 from flask_login import LoginManager
+from flask_migrate import Migrate
 
 def create_app(testing=False):
     app = Flask(__name__)
@@ -16,6 +17,9 @@ def create_app(testing=False):
       app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
 
     db.init_app(app)
+
+    migrate = Migrate(app, db)
+
     login_manager = LoginManager(app)
 
     @login_manager.user_loader
@@ -23,10 +27,7 @@ def create_app(testing=False):
       with db.session() as session:
         return session.get(User, int(user_id))
 
+    register_blueprints(app)
 
-    app.register_blueprint(api, url_prefix='/')
-
-
-    create_database(app)
 
     return app
