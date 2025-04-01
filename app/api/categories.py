@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
-from app.models import Category, db
+from app.models import Category, Item, db
 
 categories = Blueprint('categories', __name__)
 
@@ -56,3 +56,16 @@ def edit_category(category_id):
     db.session.commit()
 
     return jsonify(category.to_response_json()), 200
+
+@categories.route('/categories/<int:category_id>', methods=['DELETE'])
+@login_required
+def delete_category(category_id):
+    category = Category.query.filter_by(id=category_id, user_id=current_user.id).first()
+    if not category:
+        return jsonify({"message": "Category not found"}), 404
+
+    Item.query.filter_by(category_id=category.id).update({Item.category_id: None})
+    db.session.delete(category)
+    db.session.commit()
+
+    return jsonify({"message": "Category deleted successfully"}), 200
