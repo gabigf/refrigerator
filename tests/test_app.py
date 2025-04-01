@@ -193,3 +193,55 @@ def test_get_categories_excludes_other_users_categories(client, user_data):
 
     assert len(categories) == 1
     assert categories[0]["name"] == "Public Category"
+
+
+def test_create_category_success(client, user_data):
+    register_and_login(client, user_data)
+
+    response = client.post("/api/categories", json={"name": "Frozen"})
+    assert response.status_code == 201
+
+    data = response.json
+    assert data["name"] == "Frozen"
+    assert "id" in data
+    assert "created_at" in data
+    assert "updated_at" in data
+
+def test_create_category_duplicate_name_fails(client, user_data):
+    register_and_login(client, user_data)
+
+    client.post("/api/categories", json={"name": "Pantry"})
+    response = client.post("/api/categories", json={"name": "pantry"})
+
+    assert response.status_code == 400
+    assert "already exists" in response.json["message"]
+
+def test_create_category_missing_name_key(client, user_data):
+    register_and_login(client, user_data)
+
+    response = client.post("/api/categories", json={})
+    assert response.status_code == 400
+    assert response.json["message"] == "Invalid input"
+
+def test_create_category_empty_name_fails(client, user_data):
+    register_and_login(client, user_data)
+
+    response = client.post("/api/categories", json={"name": "   "})
+    assert response.status_code == 400
+    assert response.json["message"] == "Invalid input"
+
+def test_create_category_same_name_different_users(client, user_data):
+    register_and_login(client, user_data)
+    client.post("/api/categories", json={"name": "Snacks"})
+    client.post("/api/logout")
+
+    second_user = {
+        "email": "second@example.com",
+        "full_name": "Second User",
+        "password": "anotherpass"
+    }
+    register_and_login(client, second_user)
+    response = client.post("/api/categories", json={"name": "Snacks"})
+
+    assert response.status_code == 201
+    assert response.json["name"] == "Snacks"
