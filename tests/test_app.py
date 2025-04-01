@@ -156,3 +156,40 @@ def test_get_items_excludes_other_users_items(client, user_data):
     assert len(items) == 1
     assert items[0]["name"] == "Eggs"
 
+def test_get_categories_returns_user_categories_only(client, user_data):
+    register_and_login(client, user_data)
+
+    client.post("/api/categories", json={"name": "Dairy"})
+    client.post("/api/categories", json={"name": "Bakery"})
+
+    response = client.get("/api/categories")
+    assert response.status_code == 200
+
+    categories = response.json
+    assert len(categories) == 2
+
+    names = [c["name"] for c in categories]
+    assert "Dairy" in names
+    assert "Bakery" in names
+
+
+def test_get_categories_excludes_other_users_categories(client, user_data):
+    register_and_login(client, user_data)
+    client.post("/api/categories", json={"name": "Private Category"})
+
+    client.post("/api/logout")
+
+    second_user = {
+        "email": "second@example.com",
+        "full_name": "Second User",
+        "password": "secondpass"
+    }
+    register_and_login(client, second_user)
+    client.post("/api/categories", json={"name": "Public Category"})
+
+    response = client.get("/api/categories")
+    assert response.status_code == 200
+    categories = response.json
+
+    assert len(categories) == 1
+    assert categories[0]["name"] == "Public Category"
