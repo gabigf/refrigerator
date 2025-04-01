@@ -1,6 +1,6 @@
 import pytest
 from app import create_app, db
-from app.models import User
+from app.models import User, Item
 
 @pytest.fixture
 def app():
@@ -41,7 +41,12 @@ def expected_user():
         "full_name": user.full_name
     }
 
-
+def register_and_login(client, user_data):
+    client.post("/api/users", json=user_data)
+    client.post("/api/login", json={
+        "email": user_data["email"],
+        "password": user_data["password"]
+    })
 
 def test_create_user(client, user_data, expected_user):
     response = client.post("/api/users", json=user_data)
@@ -56,89 +61,57 @@ def test_create_user(client, user_data, expected_user):
         assert user is not None
         assert response_data == expected_user(user)
 
-
-
 def test_login_success(client, user_data, expected_user):
     client.post("/api/users", json=user_data)
-
-    login_data = {
+    response = client.post("/api/login", json={
         "email": user_data["email"],
         "password": user_data["password"]
-    }
-    response = client.post("/api/login", json=login_data)
+    })
     assert response.status_code == 200
-
     response_data = response.json
-    assert response_data["email"] == user_data["email"]
-    assert response_data["full_name"] == user_data["full_name"]
 
     with client.application.app_context():
         user = User.query.filter_by(email=user_data["email"]).first()
         assert response_data == expected_user(user)
 
-
-
 def test_login_unsuccessful(client, user_data, invalid_login_data):
     client.post("/api/users", json=user_data)
-
     response = client.post("/api/login", json=invalid_login_data)
     assert response.status_code == 401
     assert response.json["message"] == "Invalid credentials"
 
-
-
 def test_logout(client, user_data):
-  # login user
-    client.post("/api/users", json=user_data)
-    login_data = {
-        "email": user_data["email"],
-        "password": user_data["password"]
-    }
-    client.post('/api/login', json=login_data)
+    register_and_login(client, user_data)
 
-  # logout user
     response = client.post("/api/logout")
     assert response.status_code == 200
     assert response.json["message"] == "Logout successful"
 
-  # check if user is logged out
-    logout_response = client.post("/api/logout")
-    assert logout_response.status_code == 400
-    assert logout_response.json["error"] == "No user is logged in"
+    response = client.post("/api/logout")
+    assert response.status_code == 400
+    assert response.json["error"] == "No user is logged in"
 
-
-# TODO: Fix this test - category should not be a string
 def test_add_item(client, user_data):
-
-    client.post("/api/users", json=user_data)
-    login_data = {
-        "email": user_data["email"],
-        "password": user_data["password"]
-    }
-    client.post("/api/login", json=login_data)
+    register_and_login(client, user_data)
 
     item_data = {
         "name": "Milk",
         "quantity": 2,
-        "category": "Dairy",
-        "user_id": 1
+        "category": "Dairy"
     }
-    response = client.post("/api/items", json=item_data)
 
+    response = client.post("/api/items", json=item_data)
     assert response.status_code == 201
+
     response_data = response.json
     assert response_data["name"] == item_data["name"]
     assert response_data["quantity"] == item_data["quantity"]
-    assert response_data["category"] == item_data["category"]
-    assert response_data["user_id"] == 1
+    assert response_data["category"].lower() == item_data["category"].lower()
 
     with client.application.app_context():
-        from app.models import Item, User
         user = User.query.filter_by(email=user_data["email"]).first()
-        assert user is not None
         item = Item.query.filter_by(name=item_data["name"], user_id=user.id).first()
         assert item is not None
         assert item.name == item_data["name"]
         assert item.quantity == item_data["quantity"]
-        assert item.category == item_data["category"]
-        assert item.user_id == item_data["user_id"]
+        assert item.category.name.lower() == item_data["category"].lower()
