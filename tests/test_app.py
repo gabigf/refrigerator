@@ -115,3 +115,44 @@ def test_add_item(client, user_data):
         assert item.name == item_data["name"]
         assert item.quantity == item_data["quantity"]
         assert item.category.name.lower() == item_data["category"].lower()
+
+def test_get_items_returns_user_items_only(client, user_data):
+    register_and_login(client, user_data)
+
+    item_1 = {"name": "Bread", "quantity": 1, "category": "Bakery"}
+    item_2 = {"name": "Juice", "quantity": 2, "category": "Drinks"}
+
+    client.post("/api/items", json=item_1)
+    client.post("/api/items", json=item_2)
+
+    response = client.get("/api/items")
+    assert response.status_code == 200
+    items = response.json
+
+    assert len(items) == 2
+
+    names = [item["name"] for item in items]
+    assert "Bread" in names
+    assert "Juice" in names
+
+
+def test_get_items_excludes_other_users_items(client, user_data):
+    register_and_login(client, user_data)
+    client.post("/api/items", json={"name": "Butter", "quantity": 1, "category": "Dairy"})
+
+    client.post("/api/logout")
+
+    second_user = {
+        "email": "second@example.com",
+        "full_name": "Second User",
+        "password": "secondpass"
+    }
+    register_and_login(client, second_user)
+    client.post("/api/items", json={"name": "Eggs", "quantity": 12, "category": "Breakfast"})
+
+    response = client.get("/api/items")
+    assert response.status_code == 200
+    items = response.json
+    assert len(items) == 1
+    assert items[0]["name"] == "Eggs"
+
