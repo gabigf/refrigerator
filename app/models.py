@@ -21,8 +21,9 @@ class Item(db.Model):
       }
 
 class Category(db.Model):
+    __table_args__ = (db.UniqueConstraint('name', 'user_id'),)
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150), unique=True)
+    name = db.Column(db.String(150))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user = db.relationship('User', back_populates='categories')
     items = db.relationship('Item', back_populates='category', cascade="all, delete-orphan")
