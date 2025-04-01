@@ -245,3 +245,81 @@ def test_create_category_same_name_different_users(client, user_data):
 
     assert response.status_code == 201
     assert response.json["name"] == "Snacks"
+
+def test_edit_category_success(client, user_data):
+    register_and_login(client, user_data)
+
+    client.post("/api/categories", json={"name": "Frozen"})
+    category_id = client.get("/api/categories").json[0]["id"]
+
+    response = client.put(f"/api/categories/{category_id}", json={"name": "Cold Storage"})
+    assert response.status_code == 200
+    assert response.json["name"] == "Cold Storage"
+
+
+def test_edit_category_to_existing_name_fails(client, user_data):
+    register_and_login(client, user_data)
+
+    client.post("/api/categories", json={"name": "Drinks"})
+    client.post("/api/categories", json={"name": "Snacks"})
+    categories = client.get("/api/categories").json
+    drinks_id = next(c["id"] for c in categories if c["name"] == "Drinks")
+
+    response = client.put(f"/api/categories/{drinks_id}", json={"name": "Snacks"})
+    assert response.status_code == 400
+    assert "already exists" in response.json["message"]
+
+def test_edit_category_not_found(client, user_data):
+    register_and_login(client, user_data)
+
+    response = client.put("/api/categories/999", json={"name": "DoesNotExist"})
+    assert response.status_code == 404
+
+
+def test_delete_category_not_found(client, user_data):
+    register_and_login(client, user_data)
+
+    response = client.delete("/api/categories/999")
+    assert response.status_code == 404
+
+def test_edit_category_with_empty_name_fails(client, user_data):
+    register_and_login(client, user_data)
+
+    client.post("/api/categories", json={"name": "Baking"})
+    category_id = client.get("/api/categories").json[0]["id"]
+
+    response = client.put(f"/api/categories/{category_id}", json={"name": "   "})
+    assert response.status_code == 400
+    assert response.json["message"] == "Invalid input"
+
+
+def test_delete_category_other_user_forbidden(client, user_data):
+    register_and_login(client, user_data)
+    client.post("/api/categories", json={"name": "Private"})
+    category_id = client.get("/api/categories").json[0]["id"]
+
+    client.post("/api/logout")
+
+    second_user = {
+        "email": "second@example.com",
+        "full_name": "Second User",
+        "password": "anotherpass"
+    }
+    register_and_login(client, second_user)
+
+    response = client.delete(f"/api/categories/{category_id}")
+    assert response.status_code == 404
+
+
+def test_delete_category_nullifies_item_category(client, user_data):
+    register_and_login(client, user_data)
+
+    client.post("/api/items", json={"name": "Cereal", "quantity": 1, "category": "Breakfast"})
+    category_id = client.get("/api/categories").json[0]["id"]
+
+    response = client.delete(f"/api/categories/{category_id}")
+    assert response.status_code == 200
+
+    item = client.get("/api/items").json[0]
+    assert item["name"] == "Cereal"
+    assert item["category"] is None
