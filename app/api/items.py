@@ -7,7 +7,7 @@ items = Blueprint('items', __name__)
 @items.route('/items', methods=["GET"])
 @login_required
 def get_items():
-  items = Item.query.all()
+  items = Item.query.filter_by(user_id=current_user.id).all()
   return jsonify([item.to_response_json() for item in items]), 200
 
 @items.route('/items', methods=['POST'])

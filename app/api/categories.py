@@ -7,7 +7,7 @@ categories = Blueprint('categories', __name__)
 @categories.route('/categories', methods=['GET'])
 @login_required
 def get_categories():
-    categories = Category.query.all()
+    categories = Category.query.filter_by(user_id=current_user.id).all()
     return jsonify([category.to_response_json() for category in categories]), 200
 
 
