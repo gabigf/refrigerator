@@ -16,20 +16,25 @@ def get_categories():
 @login_required
 def create_category():
     data = request.get_json()
+    name = data.get("name", "").strip()
 
-    if not data or "name" not in data:
+    if not name:
         return jsonify({"message": "Invalid input"}), 400
 
-    category_exists = Category.query.filter_by(name=data["name"], user_id=current_user.id).first()
+    category_exists = Category.query.filter(
+        Category.user_id == current_user.id,
+        Category.name.ilike(name)
+    ).first()
+
     if category_exists:
         return jsonify({"message": "Category already exists"}), 400
 
-    category = Category(name=data["name"], user_id=current_user.id)
-
+    category = Category(name=name, user_id=current_user.id)
     db.session.add(category)
     db.session.commit()
 
     return jsonify(category.to_response_json()), 201
+
 
 @categories.route('/categories/<int:category_id>', methods=['PUT'])
 @login_required
